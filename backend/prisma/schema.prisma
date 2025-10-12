@@ -1,0 +1,468 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// USUARIOS
+// ========================================
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("USER") // ADMIN, USER, VIEWER
+  avatar    String?  // URL o base64 de la foto de perfil
+  phone     String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  sales     Sale[]
+  outputs   InventoryOutput[]
+}
+
+// ========================================
+// CABRAS
+// ========================================
+model Goat {
+  id                String      @id @default(cuid())
+  
+  // Identificación (formato: madre-cría, ej: 218-344)
+  customId          String      @unique
+  name              String?
+  
+  // Información biológica
+  breed             String      // Raza
+  sex               String      // MALE, FEMALE
+  birthDate         DateTime
+  weight            Float?      // Peso en kg
+  
+  // Categoría (CRIA, LEVANTE_1, LEVANTE_2, REPRODUCTOR, REPRODUCTORA, LECHERA)
+  category          String      @default("CRIA")
+  
+  // Métricas productivas
+  milkProduction    Float       @default(0)
+  feedConsumption   Float       @default(0)
+  birthCount        Int         @default(0)
+  
+  // Estado (ACTIVE, SOLD, DECEASED)
+  status            String      @default("ACTIVE")
+  notes             String?
+  
+  // Genealogía
+  motherId          String?
+  fatherId          String?
+  mother            Goat?       @relation("GoatMother", fields: [motherId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  offspring         Goat[]      @relation("GoatMother")
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  vaccines          Vaccine[]
+  reproductiveData  ReproductiveRecord[]
+  sales             Sale[]
+  
+  // NUEVAS RELACIONES
+  montasComoHembra     Monta[]                  @relation("HembraMontada")
+  montasComoMacho      Monta[]                  @relation("MachoReproductor")
+  aplicacionesMedicamentos AplicacionMedicamento[]
+  historialCategorias  CambioCategoria[]
+  historialPeso        RegistroPeso[]
+  
+  @@index([customId])
+  @@index([breed])
+  @@index([category])
+  @@index([status])
+}
+
+// ========================================
+// DATOS REPRODUCTIVOS
+// ========================================
+model ReproductiveRecord {
+  id              String    @id @default(cuid())
+  
+  goatId          String
+  goat            Goat      @relation(fields: [goatId], references: [id], onDelete: Cascade)
+  
+  // Información del macho
+  maleId          String
+  maleCustomId    String
+  maleBreed       String
+  
+  // Fechas
+  mountingDate    DateTime
+  expectedBirth   DateTime
+  actualBirthDate DateTime?
+  
+  // Resultados
+  wasAbortion     Boolean   @default(false)
+  birthNumber     Int
+  femaleOffspring Int       @default(0)
+  maleOffspring   Int       @default(0)
+  totalOffspring  Int       @default(0)
+  
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([goatId])
+}
+
+// ========================================
+// VACUNAS
+// ========================================
+model Vaccine {
+  id              String   @id @default(cuid())
+  goatId          String
+  goat            Goat     @relation(fields: [goatId], references: [id], onDelete: Cascade)
+  
+  name            String
+  dose            Float
+  unit            String
+  applicationDate DateTime
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([goatId])
+}
+
+// ========================================
+// INVENTARIO
+// ========================================
+model Product {
+  id              String    @id @default(cuid())
+  name            String
+  category        String    // ALIMENTO, MEDICAMENTO, SUPLEMENTO, INSUMO, EQUIPO, OTRO
+  description     String?
+  
+  currentStock    Float
+  minStock        Float
+  unit            String
+  
+  price           Float
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  
+  location        String?
+  expirationDate  DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  outputs         InventoryOutput[]
+  
+  @@index([category])
+}
+
+model InventoryOutput {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  quantity    Float
+  date        DateTime @default(now())
+  notes       String?
+  
+  @@index([productId])
+}
+
+// ========================================
+// PROVEEDORES
+// ========================================
+model Supplier {
+  id          String    @id @default(cuid())
+  name        String
+  nit         String?   @unique
+  phone       String?
+  email       String?
+  address     String?
+  
+  cityId      String?
+  city        City?     @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  products    Product[]
+  
+  @@index([name])
+}
+
+// ========================================
+// PERSONAL
+// ========================================
+model Staff {
+  id              String    @id @default(cuid())
+  fullName        String
+  dni             String    @unique
+  
+  staffType       String    // ADMINISTRATIVO, PRACTICANTE
+  salary          Float
+  yearsExperience Int
+  specialization  String?
+  academicDegree  String?
+  
+  managerId       String?
+  manager         Staff?    @relation("StaffHierarchy", fields: [managerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  subordinates    Staff[]   @relation("StaffHierarchy")
+  
+  startDate       DateTime
+  endDate         DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([dni])
+}
+
+// ========================================
+// VENTAS
+// ========================================
+model Sale {
+  id              String   @id @default(cuid())
+  productType     String   // CARNE, LECHE, CABRA_VIVA
+  
+  customerId      String?
+  customerName    String
+  
+  quantity        Float
+  unit            String
+  unitPrice       Float
+  totalPrice      Float
+  
+  paymentMethod   String
+  paymentStatus   String   @default("PENDING") // PENDING, PARTIAL, PAID
+  
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  
+  goatId          String?
+  goat            Goat?    @relation(fields: [goatId], references: [id], onDelete: SetNull)
+  
+  saleDate        DateTime @default(now())
+  notes           String?
+  createdAt       DateTime @default(now())
+  
+  @@index([saleDate])
+}
+
+// ========================================
+// UBICACIONES
+// ========================================
+model Country {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  code   String  @unique
+  states State[]
+}
+
+model State {
+  id        String  @id @default(cuid())
+  name      String
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  cities    City[]
+  
+  @@unique([countryId, name])
+}
+
+model City {
+  id        String     @id @default(cuid())
+  name      String
+  stateId   String
+  state     State      @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  suppliers Supplier[]
+  
+  @@unique([stateId, name])
+}
+
+// ========================================
+// MÓDULO DE REPRODUCCIÓN
+// ========================================
+model Monta {
+  id                    String    @id @default(cuid())
+  
+  // Hembra (madre)
+  hembraId              String
+  hembra                Goat      @relation("HembraMontada", fields: [hembraId], references: [id], onDelete: Cascade)
+  
+  // Macho (padre)
+  machoId               String
+  macho                 Goat      @relation("MachoReproductor", fields: [machoId], references: [id], onDelete: Cascade)
+  machoCustomId         String    // Para referencia rápida
+  machoBreed            String    // Raza del macho
+  machoName             String?
+  
+  // Fechas
+  fechaMonta            DateTime
+  fechaEstimadaParto    DateTime  // Monta + 150 días (gestación cabra)
+  fechaParto            DateTime?
+  
+  // Resultado
+  tipoEvento            String    @default("GESTACION") // PARTO_EXITOSO, ABORTO, PARTO_ASISTIDO, GESTACION
+  numeroParto           Int       @default(1)
+  
+  // Crías
+  totalCrias            Int       @default(0)
+  criasHembra           Int       @default(0)
+  criasMacho            Int       @default(0)
+  criasMuertas          Int       @default(0)
+  
+  // Detalles de cada cría (JSON string con array de objetos)
+  // Formato: [{ customId: "218-344", sexo: "FEMALE", peso: 2.5, estado: "VIVA" }]
+  detallesCrias         String?   
+  
+  // Datos médicos
+  complicaciones        String?
+  veterinarioAsistio    Boolean   @default(false)
+  tratamientosPostParto String?
+  
+  // Producción láctea post-parto
+  inicioProduccionLeche DateTime?
+  produccionPromedio    Float?    // Litros diarios promedio
+  
+  notas                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@index([hembraId])
+  @@index([machoId])
+  @@index([fechaMonta])
+  @@index([fechaEstimadaParto])
+}
+
+// ========================================
+// MÓDULO DE MEDICAMENTOS
+// ========================================
+model Medicamento {
+  id                  String   @id @default(cuid())
+  nombre              String
+  tipo                String   // VACUNA, ANTIBIOTICO, ANTIPARASITARIO, VITAMINA, SUPLEMENTO, OTRO
+  descripcion         String?
+  
+  // Administración
+  dosis               String   // "5ml", "2 comprimidos", "1 tableta cada 12h"
+  viaAdministracion   String   // ORAL, INYECTABLE, TOPICA, INTRAVENOSA
+  
+  // Información del producto
+  fabricante          String?
+  lote                String?
+  fechaVencimiento    DateTime?
+  
+  // Inventario
+  stockActual         Float
+  stockMinimo         Float
+  unidadMedida        String   // ml, tabletas, frascos, sobres, kg
+  
+  // Costos
+  precioUnitario      Float?
+  
+  // Almacenamiento
+  ubicacionAlmacen    String?
+  condicionesAlmacenamiento String? // "Refrigeración 2-8°C", "Lugar seco"
+  
+  notas               String?
+  activo              Boolean  @default(true)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  aplicaciones        AplicacionMedicamento[]
+  
+  @@index([tipo])
+  @@index([fechaVencimiento])
+}
+
+model AplicacionMedicamento {
+  id                    String      @id @default(cuid())
+  
+  // Cabra tratada
+  goatId                String
+  goat                  Goat        @relation(fields: [goatId], references: [id], onDelete: Cascade)
+  
+  // Medicamento aplicado
+  medicamentoId         String
+  medicamento           Medicamento @relation(fields: [medicamentoId], references: [id], onDelete: Cascade)
+  
+  // Detalles de aplicación
+  fechaAplicacion       DateTime    @default(now())
+  dosis                 String      // "5ml", "2 tabletas"
+  viaAdministrada       String      // Puede diferir del default del medicamento
+  
+  // Responsable
+  veterinario           String?
+  aplicadoPor           String?     // Nombre del empleado que aplicó
+  
+  // Motivo y seguimiento
+  motivo                String      // "Vacunación anual", "Tratamiento parásitos", "Prevención"
+  diagnostico           String?     // Si es por enfermedad
+  
+  // Dosis recurrentes
+  proximaDosis          DateTime?
+  frecuencia            String?     // "Cada 30 días", "Cada 6 meses"
+  
+  // Observaciones
+  observaciones         String?
+  reaccionAdversa       String?
+  efectividad           String?     // "Buena", "Regular", "Mala"
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([goatId])
+  @@index([medicamentoId])
+  @@index([fechaAplicacion])
+  @@index([proximaDosis])
+}
+
+// ========================================
+// HISTORIAL DE CAMBIOS DE CATEGORÍA
+// ========================================
+model CambioCategoria {
+  id                String   @id @default(cuid())
+  goatId            String
+  goat              Goat     @relation(fields: [goatId], references: [id], onDelete: Cascade)
+  
+  categoriaAnterior String
+  categoriaNueva    String
+  pesoAlCambio      Float    // Peso cuando se hizo el cambio
+  edadMeses         Int?     // Edad en meses al momento del cambio
+  
+  motivo            String?  // "Alcanzó peso mínimo", "Manual", "Cumplió edad"
+  realizadoPor      String?  // Usuario que hizo el cambio
+  
+  fecha             DateTime @default(now())
+  
+  @@index([goatId])
+  @@index([fecha])
+}
+
+// ========================================
+// HISTORIAL DE PESO (Para gráficas de crecimiento)
+// ========================================
+model RegistroPeso {
+  id          String   @id @default(cuid())
+  goatId      String
+  goat        Goat     @relation(fields: [goatId], references: [id], onDelete: Cascade)
+  
+  peso        Float    // Peso en kg
+  fecha       DateTime @default(now())
+  
+  // Contexto del registro
+  tipoRegistro String  @default("RUTINARIO") // RUTINARIO, NACIMIENTO, VENTA, VETERINARIO
+  notas        String?
+  registradoPor String? // Usuario que registró
+  
+  @@index([goatId])
+  @@index([fecha])
+}

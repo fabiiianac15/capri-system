@@ -1,0 +1,545 @@
+import { useEffect, useState } from 'react';
+import { Layout } from '../components/Layout';
+import goatService from '../services/goat.service';
+import type { Goat, GoatSex, GoatCategory, GoatStatus } from '../types/index';
+
+export default function Goats() {
+  const [goats, setGoats] = useState<Goat[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = use        </div>
+      </div>
+    </Layout>
+  );
+}
+t [selectedGoat, setSelectedGoat] = useState<Goat | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    customId: '',
+    name: '',
+    breed: '',
+    birthDate: '',
+    sex: 'FEMALE' as GoatSex,
+    category: 'CRIA' as GoatCategory,
+    weight: '',
+    milkProduction: '',
+    feedConsumption: '',
+    birthCount: '',
+    status: 'ACTIVE' as GoatStatus,
+    notes: ''
+  });
+
+  useEffect(() => {
+    loadGoats();
+  }, []);
+
+  const loadGoats = async () => {
+    try {
+      setIsLoading(true);
+      const data = await goatService.getAll();
+      setGoats(data);
+    } catch (error) {
+      console.error('Error al cargar cabras:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateGoat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        customId: formData.customId,
+        name: formData.name || undefined,
+        breed: formData.breed,
+        birthDate: formData.birthDate,
+        sex: formData.sex,
+        category: formData.category,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        notes: formData.notes || undefined,
+      };
+      await goatService.create(payload);
+      setCreateOpen(false);
+      resetForm();
+      loadGoats();
+    } catch (error) {
+      console.error('Error al crear cabra:', error);
+    }
+  };
+
+  const handleDeleteGoat = async () => {
+    if (!selectedGoat) return;
+    try {
+      setIsDeleting(true);
+      await goatService.delete(selectedGoat.id);
+      setDeleteConfirmOpen(false);
+      setSelectedGoat(null);
+      loadGoats();
+    } catch (error) {
+      console.error('Error al eliminar cabra:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      customId: '',
+      name: '',
+      breed: '',
+      birthDate: '',
+      sex: 'FEMALE' as GoatSex,
+      category: 'CRIA' as GoatCategory,
+      weight: '',
+      milkProduction: '',
+      feedConsumption: '',
+      birthCount: '',
+      status: 'ACTIVE' as GoatStatus,
+      notes: ''
+    });
+  };
+
+  const filteredGoats = goats.filter(goat =>
+    goat.customId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (goat.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    goat.breed.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const calculateAge = (birthDate: string) => {
+    const birth = new Date(birthDate);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - birth.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const years = Math.floor(diffDays / 365);
+    const months = Math.floor((diffDays % 365) / 30);
+    return years > 0 ? `${years}a ${months}m` : `${months}m`;
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <svg className="h-12 w-12 animate-spin text-[#6b7c45]" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-xl font-medium text-[#6b7c45]">Cargando datos...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Page Header Card */}
+          <div className="bg-white rounded-xl shadow-sm p-8 border border-[#E8E8E8] animate-fade-in">
+            <h2 className="text-3xl font-bold text-[#1a2e02] mb-2">Gestión de Cabras</h2>
+            <p className="text-[#6b7c45]">Administra el inventario completo de caprinos en la granja</p>
+          </div>
+
+          {/* Actions Bar + Table Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-[#E8E8E8] animate-fade-in">
+            {/* Search and Actions */}
+            <div className="p-6 border-b border-[#E8E8E8]">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[250px]">
+                  <svg className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="search"
+                    placeholder="Buscar por ID, nombre o raza..."
+                    className="pl-8 h-9 px-3 py-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45] transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <button
+                  onClick={() => setCreateOpen(true)}
+                  className="px-4 py-2 bg-[#1a2e02] hover:bg-[#2a4a04] text-white rounded-md font-semibold text-sm transition-all duration-300 flex items-center gap-2"
+                >
+                  <span className="text-lg">+</span>
+                  <span>Agregar Cabra</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              {filteredGoats.length === 0 ? (
+                <div className="flex h-[400px] items-center justify-center">
+                  <div className="text-center">
+                    <span className="text-6xl mb-4 block">🐐</span>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">No hay cabras</h3>
+                    <p className="text-sm text-gray-500 mb-4">No se encontraron registros. Agrega la primera cabra.</p>
+                    <button
+                      onClick={() => setCreateOpen(true)}
+                      className="px-4 py-2 bg-[#1a2e02] hover:bg-[#2a4a04] text-white rounded-md font-semibold text-sm transition-all duration-300 flex items-center gap-2 mx-auto"
+                    >
+                      <span>+</span>
+                      <span>Agregar Nueva</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Raza</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Edad</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Sexo</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Peso</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Producción</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredGoats.map((goat) => (
+                      <tr key={goat.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{goat.customId}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{goat.name || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{goat.breed}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{calculateAge(goat.birthDate)}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {goat.sex === 'FEMALE' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-pink-50 text-pink-700 text-xs font-medium border border-pink-200">
+                              ♀️ Hembra
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200">
+                              ♂️ Macho
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {goat.category === 'LECHERA' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200">
+                              LECHERA
+                            </span>
+                          )}
+                          {goat.category === 'REPRODUCTOR' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-purple-50 text-purple-700 text-xs font-medium border border-purple-200">
+                              REPRODUCTOR
+                            </span>
+                          )}
+                          {goat.category === 'CRIA' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 text-gray-700 text-xs font-medium border border-gray-200">
+                              CRIA
+                            </span>
+                          )}
+                          {!['LECHERA', 'REPRODUCTOR', 'CRIA'].includes(goat.category) && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 text-gray-700 text-xs font-medium border border-gray-200">
+                              {goat.category}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{goat.weight ? `${goat.weight}kg` : '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{goat.milkProduction}L</td>
+                        <td className="px-4 py-3 text-sm">
+                          {goat.status === 'ACTIVE' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-50 text-green-700 text-xs font-medium border border-green-200">
+                              Activo
+                            </span>
+                          )}
+                          {goat.status === 'SOLD' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium border border-red-200">
+                              Vendido
+                            </span>
+                          )}
+                          {goat.status === 'DECEASED' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-400 text-white text-xs font-medium">
+                              Fallecido
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+                              <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedGoat(goat);
+                                setDeleteConfirmOpen(true);
+                              }}
+                              className="p-2 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* CREATE DIALOG */}
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Agregar Nueva Cabra</h3>
+              <p className="text-sm text-gray-500 mt-1">Completa la información de la cabra</p>
+            </div>
+
+            <form onSubmit={handleCreateGoat} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">ID de Cabra *</label>
+                  <input
+                    type="text"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="Ej: 218-344"
+                    value={formData.customId}
+                    onChange={(e) => setFormData({ ...formData, customId: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Nombre</label>
+                  <input
+                    type="text"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="Nombre de la cabra"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Raza *</label>
+                  <input
+                    type="text"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="Ej: Saanen, Alpine"
+                    value={formData.breed}
+                    onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Fecha de Nacimiento *</label>
+                  <input
+                    type="date"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Sexo *</label>
+                  <select
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    value={formData.sex}
+                    onChange={(e) => setFormData({ ...formData, sex: e.target.value as GoatSex })}
+                    required
+                  >
+                    <option value="FEMALE">Hembra</option>
+                    <option value="MALE">Macho</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Categoría *</label>
+                  <select
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as GoatCategory })}
+                    required
+                  >
+                    <option value="CRIA">CRIA</option>
+                    <option value="LEVANTE_1">LEVANTE_1</option>
+                    <option value="LEVANTE_2">LEVANTE_2</option>
+                    <option value="REPRODUCTOR">REPRODUCTOR</option>
+                    <option value="LECHERA">LECHERA</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Peso (kg)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="0.0"
+                    value={formData.weight}
+                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Producción de Leche (L)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="0.0"
+                    value={formData.milkProduction}
+                    onChange={(e) => setFormData({ ...formData, milkProduction: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Consumo de Alimento (kg)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="0.0"
+                    value={formData.feedConsumption}
+                    onChange={(e) => setFormData({ ...formData, feedConsumption: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Cantidad de Crías</label>
+                  <input
+                    type="number"
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    placeholder="0"
+                    value={formData.birthCount}
+                    onChange={(e) => setFormData({ ...formData, birthCount: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Estado *</label>
+                  <select
+                    className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45]"
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as GoatStatus })}
+                    required
+                  >
+                    <option value="ACTIVE">Activo</option>
+                    <option value="SOLD">Vendido</option>
+                    <option value="DECEASED">Fallecido</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">Notas</label>
+                  <textarea
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#6b7c45] focus:border-[#6b7c45] resize-none"
+                    placeholder="Información adicional..."
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateOpen(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium text-sm transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#1a2e02] hover:bg-[#2a4a04] text-white rounded-md font-semibold text-sm transition-all duration-300"
+                >
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION DIALOG */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md m-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">¿Estás seguro?</h3>
+              <p className="text-sm text-gray-500">
+                Esta acción no se puede deshacer. Se eliminará permanentemente la cabra <strong>{selectedGoat?.customId}</strong>.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+              <button
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setSelectedGoat(null);
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium text-sm transition-all disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteGoat}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-semibold text-sm transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Eliminar</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FOOTER */}
+      <footer className="bg-[#1a2e02] text-white py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-sm text-gray-300 flex items-center justify-center gap-2 flex-wrap">
+            <span className="font-medium">© 2024 CAPRI</span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <span>🌾</span>
+              <span>Sistema Profesional de Gestión Caprina</span>
+            </span>
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}
