@@ -13,19 +13,33 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔐 Token agregado a la petición:', config.url);
+    } else {
+      console.warn('⚠️ No hay token disponible para:', config.url);
     }
     return config;
   },
   (error) => {
+    console.error('❌ Error en interceptor de request:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para manejar errores de autenticación
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ Respuesta exitosa de:', response.config.url);
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url = error.config?.url;
+    
+    console.error(`❌ Error ${status} en ${url}:`, error.response?.data);
+    
+    if (status === 401) {
+      console.error('🔒 Error de autenticación. Token actual:', localStorage.getItem('token')?.substring(0, 20) + '...');
+      
       // Token expirado o inválido
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -35,6 +49,7 @@ api.interceptors.response.use(
       const publicPaths = ['/', '/login', '/register'];
       
       if (!publicPaths.includes(currentPath)) {
+        console.log('🔄 Redirigiendo a login...');
         window.location.href = '/login';
       }
     }

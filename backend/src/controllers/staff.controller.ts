@@ -6,10 +6,10 @@ class StaffController {
     try {
       const data = req.body;
 
-      // Validaciones básicas
-      if (!data.fullName || !data.dni || !data.staffType || !data.salary || data.yearsExperience === undefined || !data.startDate) {
+      // Validaciones básicas (salary es opcional para practicantes)
+      if (!data.fullName || !data.dni || !data.staffType || data.yearsExperience === undefined || !data.startDate) {
         res.status(400).json({ 
-          error: 'Faltan campos requeridos: fullName, dni, staffType, salary, yearsExperience, startDate' 
+          error: 'Faltan campos requeridos: fullName, dni, staffType, yearsExperience, startDate' 
         });
         return;
       }
@@ -113,7 +113,7 @@ class StaffController {
     }
   }
 
-  async getStats(req: Request, res: Response): Promise<void> {
+  async getStats(_req: Request, res: Response): Promise<void> {
     try {
       const stats = await staffService.getStats();
       
@@ -123,7 +123,7 @@ class StaffController {
     }
   }
 
-  async getManagers(req: Request, res: Response): Promise<void> {
+  async getManagers(_req: Request, res: Response): Promise<void> {
     try {
       const managers = await staffService.getManagers();
       

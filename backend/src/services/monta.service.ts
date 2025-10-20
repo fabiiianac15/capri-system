@@ -96,11 +96,15 @@ class MontaService {
         fechaEstimadaParto,
         tipoEvento: 'GESTACION',
         notas: data.observaciones,
-      },
+        createdById: (data as any).createdById,
+      } as any,
       include: {
         hembra: true,
         macho: true,
-      }
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any
     });
 
     return monta;
@@ -127,7 +131,10 @@ class MontaService {
       include: {
         hembra: true,
         macho: true,
-      },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any,
       orderBy: {
         fechaMonta: 'desc'
       }
@@ -145,7 +152,10 @@ class MontaService {
       include: {
         hembra: true,
         macho: true,
-      }
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any
     });
 
     return monta;

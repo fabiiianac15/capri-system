@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { supplierService } from '../services/supplier.service';
 
 export const supplierController = {
-  async getAll(req: Request, res: Response) {
+  async getAll(_req: Request, res: Response) {
     try {
       const suppliers = await supplierService.getAll();
       res.json(suppliers);
@@ -12,13 +12,14 @@ export const supplierController = {
     }
   },
 
-  async getById(req: Request, res: Response) {
+  async getById(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id;
       const supplier = await supplierService.getById(id);
       
       if (!supplier) {
-        return res.status(404).json({ error: 'Proveedor no encontrado' });
+        res.status(404).json({ error: 'Proveedor no encontrado' });
+        return;
       }
       
       res.json(supplier);
@@ -28,20 +29,21 @@ export const supplierController = {
     }
   },
 
-  async create(req: Request, res: Response) {
+  async create(req: Request, res: Response): Promise<void> {
     try {
       const supplier = await supplierService.create(req.body);
       res.status(201).json(supplier);
     } catch (error: any) {
       console.error('Error al crear proveedor:', error);
       if (error.code === 'P2002') {
-        return res.status(400).json({ error: 'El NIT ya está registrado' });
+        res.status(400).json({ error: 'El NIT ya está registrado' });
+        return;
       }
       res.status(500).json({ error: 'Error al crear proveedor' });
     }
   },
 
-  async update(req: Request, res: Response) {
+  async update(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id;
       const supplier = await supplierService.update(id, req.body);
@@ -49,13 +51,14 @@ export const supplierController = {
     } catch (error: any) {
       console.error('Error al actualizar proveedor:', error);
       if (error.code === 'P2002') {
-        return res.status(400).json({ error: 'El NIT ya está registrado' });
+        res.status(400).json({ error: 'El NIT ya está registrado' });
+        return;
       }
       res.status(500).json({ error: 'Error al actualizar proveedor' });
     }
   },
 
-  async delete(req: Request, res: Response) {
+  async delete(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id;
       await supplierService.delete(id);
@@ -67,7 +70,7 @@ export const supplierController = {
   },
 
   // Endpoints para cascada de ubicación
-  async getCountries(req: Request, res: Response) {
+  async getCountries(_req: Request, res: Response) {
     try {
       const countries = await supplierService.getCountries();
       res.json(countries);

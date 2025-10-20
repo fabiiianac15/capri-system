@@ -245,7 +245,7 @@ export default function Products() {
       expirationDate: product.expirationDate 
         ? new Date(product.expirationDate).toISOString().split('T')[0]
         : '',
-      supplierId: product.supplierId
+      supplierId: product.supplierId || ''
     });
     setEditOpen(true);
   };
@@ -682,7 +682,7 @@ export default function Products() {
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Ej: Vitamina B12"
+                    placeholder="Ej: Vitamina B12 o Helado de leche de cabra"
                   />
                 </div>
 
@@ -735,16 +735,15 @@ export default function Products() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Proveedor <span className="text-red-500">*</span>
+                    Proveedor <span className="text-gray-500 text-xs">(Opcional para productos locales)</span>
                   </label>
                   <select
                     name="supplierId"
                     value={formData.supplierId}
                     onChange={handleInputChange}
-                    required
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="">🌾 Producción Local / Sin proveedor</option>
                     {suppliers.map(supplier => (
                       <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                     ))}
@@ -891,6 +890,12 @@ export default function Products() {
                         <MapPin className="w-4 h-4" />
                         {selectedProduct.location}
                       </p>
+                    </div>
+                  )}
+                  {selectedProduct.createdBy && (
+                    <div className="col-span-2">
+                      <span className="text-green-700 font-medium">Registrado por:</span>
+                      <p className="text-green-900">👤 {selectedProduct.createdBy.name}</p>
                     </div>
                   )}
                 </div>
@@ -1117,16 +1122,15 @@ export default function Products() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Proveedor <span className="text-red-500">*</span>
+                    Proveedor <span className="text-gray-500 text-xs">(Opcional para productos locales)</span>
                   </label>
                   <select
                     name="supplierId"
                     value={formData.supplierId}
                     onChange={handleInputChange}
-                    required
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="">🌾 Producción Local / Sin proveedor</option>
                     {suppliers.map(supplier => (
                       <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                     ))}

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
 import { saleService, type Sale, type ProductType, type PaymentStatus } from '../services/sale.service';
 import goatService from '../services/goat.service';
+import { productService } from '../services/product.service';
 import type { Goat } from '../types';
+import type { Product } from '../services/product.service';
 import { useAuth } from '../context/AuthContext';
 import { generateSalesReport } from '../utils/salesPdfReport';
 import { 
@@ -22,7 +24,7 @@ import {
   FileText
 } from 'lucide-react';
 
-const PRODUCT_TYPES: ProductType[] = ['CARNE', 'LECHE', 'CABRA_VIVA'];
+const PRODUCT_TYPES: ProductType[] = ['CARNE', 'LECHE', 'CABRA_VIVA', 'PRODUCTO_ELABORADO'];
 const PAYMENT_STATUSES: PaymentStatus[] = ['PENDING', 'PARTIAL', 'PAID'];
 const PAYMENT_METHODS = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'CHEQUE'];
 
@@ -30,6 +32,7 @@ export default function SalesPage() {
   const { user } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [goats, setGoats] = useState<Goat[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +71,9 @@ export default function SalesPage() {
     totalPrice: '',
     paymentMethod: 'EFECTIVO',
     paymentStatus: 'PENDING' as PaymentStatus,
+    amountPaid: '',
     goatId: '',
+    productId: '', // Para productos elaborados
     notes: '',
     saleDate: new Date().toISOString().split('T')[0]
   });
@@ -77,10 +82,22 @@ export default function SalesPage() {
     loadData();
   }, [filters]);
 
+  // Auto-calcular el precio total cuando cambian cantidad o precio unitario
+  useEffect(() => {
+    if (formData.quantity && formData.unitPrice) {
+      const quantity = parseFloat(formData.quantity);
+      const unitPrice = parseFloat(formData.unitPrice);
+      if (!isNaN(quantity) && !isNaN(unitPrice)) {
+        const total = quantity * unitPrice;
+        setFormData(prev => ({ ...prev, totalPrice: total.toString() }));
+      }
+    }
+  }, [formData.quantity, formData.unitPrice]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [salesData, goatsData, statsData] = await Promise.all([
+      const [salesData, goatsData, productsData, statsData] = await Promise.all([
         saleService.getAll({
           productType: filters.productType || undefined,
           paymentStatus: filters.paymentStatus || undefined,
@@ -88,10 +105,12 @@ export default function SalesPage() {
           endDate: filters.endDate || undefined
         }),
         goatService.getAll({ status: 'ACTIVE' }),
+        productService.getAll(), // Cargar productos para ventas
         saleService.getStats()
       ]);
       setSales(salesData);
       setGoats(goatsData);
+      setProducts(productsData);
       setStats(statsData);
     } catch (error) {
       console.error('Error loading sales:', error);
@@ -106,31 +125,74 @@ export default function SalesPage() {
     try {
       setIsSubmitting(true);
       
+      // Verificar token antes de hacer la petición
+      const token = localStorage.getItem('token');
+      console.log('🔍 Verificando token antes de crear venta...');
+      console.log('🔑 Token presente:', !!token);
+      if (token) {
+        console.log('🔑 Token (primeros 20 chars):', token.substring(0, 20) + '...');
+      }
+      
+      // Validar que unit no esté vacío
+      if (!formData.unit || formData.unit.trim() === '') {
+        alert('La unidad de medida es requerida');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Auto-calculate total if not provided
       const total = formData.totalPrice 
         ? parseFloat(formData.totalPrice) 
         : parseFloat(formData.quantity) * parseFloat(formData.unitPrice);
 
-      await saleService.create({
+      // Si es un producto elaborado, agregar el nombre del producto a las notas
+      let notesWithProduct = formData.notes || '';
+      if (formData.productType === 'PRODUCTO_ELABORADO' && formData.productId) {
+        const product = products.find(p => p.id === formData.productId);
+        if (product) {
+          notesWithProduct = `Producto: ${product.name}${formData.notes ? ` | ${formData.notes}` : ''}`;
+        }
+      }
+
+      console.log('📝 Creando venta con datos:', {
+        customerName: formData.customerName,
+        productType: formData.productType,
+        quantity: formData.quantity,
+        unit: formData.unit,
+        unitPrice: formData.unitPrice,
+        totalPrice: total,
+        paymentMethod: formData.paymentMethod
+      });
+
+      const saleData = {
         customerName: formData.customerName,
         customerId: formData.customerId || undefined,
         productType: formData.productType,
         quantity: parseFloat(formData.quantity),
-        unit: formData.unit,
+        unit: formData.unit.trim(),
         unitPrice: parseFloat(formData.unitPrice),
         totalPrice: total,
         paymentMethod: formData.paymentMethod,
         paymentStatus: formData.paymentStatus,
+        amountPaid: formData.amountPaid && formData.amountPaid !== '' ? parseFloat(formData.amountPaid) : undefined,
         goatId: formData.productType === 'CABRA_VIVA' ? formData.goatId : undefined,
-        notes: formData.notes || undefined,
+        notes: notesWithProduct || undefined,
         saleDate: formData.saleDate
-      });
+      };
+
+      console.log('📤 Datos completos que se enviarán:', JSON.stringify(saleData, null, 2));
+
+      await saleService.create(saleData);
       
+      console.log('✅ Venta creada exitosamente');
       alert('Venta creada exitosamente');
       setCreateOpen(false);
       resetForm();
       loadData();
     } catch (error: any) {
+      console.error('❌ Error creating sale:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
       alert(error.response?.data?.error || 'Error al crear venta');
     } finally {
       setIsSubmitting(false);
@@ -149,6 +211,15 @@ export default function SalesPage() {
         ? parseFloat(formData.totalPrice) 
         : parseFloat(formData.quantity) * parseFloat(formData.unitPrice);
 
+      // Si es un producto elaborado, agregar el nombre del producto a las notas
+      let notesWithProduct = formData.notes || '';
+      if (formData.productType === 'PRODUCTO_ELABORADO' && formData.productId) {
+        const product = products.find(p => p.id === formData.productId);
+        if (product) {
+          notesWithProduct = `Producto: ${product.name}${formData.notes ? ` | ${formData.notes}` : ''}`;
+        }
+      }
+
       await saleService.update(selectedSale.id, {
         customerName: formData.customerName,
         customerId: formData.customerId || undefined,
@@ -159,8 +230,9 @@ export default function SalesPage() {
         totalPrice: total,
         paymentMethod: formData.paymentMethod,
         paymentStatus: formData.paymentStatus,
+        amountPaid: formData.amountPaid && formData.amountPaid !== '' ? parseFloat(formData.amountPaid) : undefined,
         goatId: formData.productType === 'CABRA_VIVA' ? formData.goatId : undefined,
-        notes: formData.notes || undefined,
+        notes: notesWithProduct || undefined,
         saleDate: formData.saleDate
       });
       
@@ -206,7 +278,9 @@ export default function SalesPage() {
       totalPrice: sale.totalPrice.toString(),
       paymentMethod: sale.paymentMethod,
       paymentStatus: sale.paymentStatus,
+      amountPaid: sale.amountPaid?.toString() || '0',
       goatId: sale.goatId || '',
+      productId: '', // Se podría extraer del notes si se guarda ahí
       notes: sale.notes || '',
       saleDate: new Date(sale.saleDate).toISOString().split('T')[0]
     });
@@ -234,7 +308,9 @@ export default function SalesPage() {
       totalPrice: '',
       paymentMethod: 'EFECTIVO',
       paymentStatus: 'PENDING',
+      amountPaid: '',
       goatId: '',
+      productId: '',
       notes: '',
       saleDate: new Date().toISOString().split('T')[0]
     });
@@ -287,7 +363,8 @@ export default function SalesPage() {
     const labels: Record<ProductType, string> = {
       CARNE: 'Carne',
       LECHE: 'Leche',
-      CABRA_VIVA: 'Cabra Viva'
+      CABRA_VIVA: 'Cabra Viva',
+      PRODUCTO_ELABORADO: 'Producto Elaborado'
     };
     return labels[type];
   };
@@ -666,7 +743,17 @@ export default function SalesPage() {
                       <select
                         required
                         value={formData.productType}
-                        onChange={(e) => setFormData({ ...formData, productType: e.target.value as ProductType, goatId: '' })}
+                        onChange={(e) => {
+                          const newType = e.target.value as ProductType;
+                          console.log('🔄 Cambiando tipo de producto a:', newType);
+                          setFormData({ 
+                            ...formData, 
+                            productType: newType, 
+                            goatId: '', 
+                            productId: '',
+                            unit: newType === 'PRODUCTO_ELABORADO' ? 'unidad' : 'kg'
+                          });
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         {PRODUCT_TYPES.map(type => (
@@ -691,6 +778,37 @@ export default function SalesPage() {
                           {goats.map(goat => (
                             <option key={goat.id} value={goat.id}>
                               {goat.customId} - {goat.name || 'Sin nombre'} ({goat.breed})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Product Selection (only for PRODUCTO_ELABORADO) */}
+                    {formData.productType === 'PRODUCTO_ELABORADO' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Producto *
+                        </label>
+                        <select
+                          required={formData.productType === 'PRODUCTO_ELABORADO'}
+                          value={formData.productId}
+                          onChange={(e) => {
+                            const selectedProduct = products.find(p => p.id === e.target.value);
+                            console.log('🛍️ Producto seleccionado:', selectedProduct);
+                            setFormData({ 
+                              ...formData, 
+                              productId: e.target.value,
+                              unitPrice: selectedProduct?.price.toString() || formData.unitPrice,
+                              unit: selectedProduct?.unit || 'unidad' // Usar 'unidad' por defecto
+                            });
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        >
+                          <option value="">Seleccionar producto...</option>
+                          {products.filter(p => p.currentStock > 0).map(product => (
+                            <option key={product.id} value={product.id}>
+                              {product.name} - Stock: {product.currentStock} {product.unit || 'unidad'} - ${product.price}
                             </option>
                           ))}
                         </select>
@@ -728,6 +846,7 @@ export default function SalesPage() {
                         />
                         <input
                           type="text"
+                          required
                           value={formData.unit}
                           onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                           placeholder="Unidad"
@@ -801,6 +920,31 @@ export default function SalesPage() {
                         ))}
                       </select>
                     </div>
+
+                    {/* Amount Paid (for partial payments) */}
+                    {formData.paymentStatus !== 'PAID' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Monto Pagado (COP)
+                          {formData.paymentStatus === 'PARTIAL' && <span className="text-red-500"> *</span>}
+                        </label>
+                        <input
+                          type="number"
+                          required={formData.paymentStatus === 'PARTIAL'}
+                          min="0"
+                          step="100"
+                          value={formData.amountPaid}
+                          onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
+                          placeholder={formData.totalPrice ? `Debe: ${formData.totalPrice}` : '0'}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                        {formData.amountPaid && formData.totalPrice && parseFloat(formData.amountPaid) > 0 && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Pendiente: ${(parseFloat(formData.totalPrice) - parseFloat(formData.amountPaid)).toLocaleString('es-CO')}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Notes */}
                     <div className="md:col-span-2">
@@ -893,7 +1037,17 @@ export default function SalesPage() {
                       <select
                         required
                         value={formData.productType}
-                        onChange={(e) => setFormData({ ...formData, productType: e.target.value as ProductType, goatId: '' })}
+                        onChange={(e) => {
+                          const newType = e.target.value as ProductType;
+                          console.log('🔄 Cambiando tipo de producto a:', newType);
+                          setFormData({ 
+                            ...formData, 
+                            productType: newType, 
+                            goatId: '', 
+                            productId: '',
+                            unit: newType === 'PRODUCTO_ELABORADO' ? 'unidad' : formData.unit
+                          });
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         {PRODUCT_TYPES.map(type => (
@@ -929,6 +1083,37 @@ export default function SalesPage() {
                       </div>
                     )}
 
+                    {/* Product Selection (only for PRODUCTO_ELABORADO) */}
+                    {formData.productType === 'PRODUCTO_ELABORADO' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Producto *
+                        </label>
+                        <select
+                          required={formData.productType === 'PRODUCTO_ELABORADO'}
+                          value={formData.productId}
+                          onChange={(e) => {
+                            const selectedProduct = products.find(p => p.id === e.target.value);
+                            console.log('🛍️ Producto seleccionado:', selectedProduct);
+                            setFormData({ 
+                              ...formData, 
+                              productId: e.target.value,
+                              unitPrice: selectedProduct?.price.toString() || formData.unitPrice,
+                              unit: selectedProduct?.unit || 'unidad' // Usar 'unidad' por defecto
+                            });
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        >
+                          <option value="">Seleccionar producto...</option>
+                          {products.filter(p => p.currentStock > 0).map(product => (
+                            <option key={product.id} value={product.id}>
+                              {product.name} - Stock: {product.currentStock} {product.unit || 'unidad'} - ${product.price}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Fecha de Venta *
@@ -958,6 +1143,7 @@ export default function SalesPage() {
                         />
                         <input
                           type="text"
+                          required
                           value={formData.unit}
                           onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                           placeholder="Unidad"
@@ -1027,6 +1213,31 @@ export default function SalesPage() {
                         ))}
                       </select>
                     </div>
+
+                    {/* Amount Paid (for partial payments) */}
+                    {formData.paymentStatus !== 'PAID' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Monto Pagado (COP)
+                          {formData.paymentStatus === 'PARTIAL' && <span className="text-red-500"> *</span>}
+                        </label>
+                        <input
+                          type="number"
+                          required={formData.paymentStatus === 'PARTIAL'}
+                          min="0"
+                          step="100"
+                          value={formData.amountPaid}
+                          onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
+                          placeholder={formData.totalPrice ? `Debe: ${formData.totalPrice}` : '0'}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                        {formData.amountPaid && formData.totalPrice && parseFloat(formData.amountPaid) > 0 && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Pendiente: ${(parseFloat(formData.totalPrice) - parseFloat(formData.amountPaid)).toLocaleString('es-CO')}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">

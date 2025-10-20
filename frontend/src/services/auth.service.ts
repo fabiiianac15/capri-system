@@ -6,9 +6,15 @@ class AuthService {
     const response = await api.post<{ data: AuthResponse }>('/auth/login', data);
     const { user, token } = response.data.data;
     
+    console.log('🔑 Login exitoso. Guardando token...', token.substring(0, 20) + '...');
+    
     // Guardar en localStorage
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
+    
+    // Verificar que se guardó correctamente
+    const savedToken = localStorage.getItem('token');
+    console.log('✅ Token guardado correctamente:', savedToken === token);
     
     return response.data.data;
   }

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.supplierController = void 0;
 const supplier_service_1 = require("../services/supplier.service");
 exports.supplierController = {
-    async getAll(req, res) {
+    async getAll(_req, res) {
         try {
             const suppliers = await supplier_service_1.supplierService.getAll();
             res.json(suppliers);
@@ -18,7 +18,8 @@ exports.supplierController = {
             const id = req.params.id;
             const supplier = await supplier_service_1.supplierService.getById(id);
             if (!supplier) {
-                return res.status(404).json({ error: 'Proveedor no encontrado' });
+                res.status(404).json({ error: 'Proveedor no encontrado' });
+                return;
             }
             res.json(supplier);
         }
@@ -35,7 +36,8 @@ exports.supplierController = {
         catch (error) {
             console.error('Error al crear proveedor:', error);
             if (error.code === 'P2002') {
-                return res.status(400).json({ error: 'El NIT ya está registrado' });
+                res.status(400).json({ error: 'El NIT ya está registrado' });
+                return;
             }
             res.status(500).json({ error: 'Error al crear proveedor' });
         }
@@ -49,7 +51,8 @@ exports.supplierController = {
         catch (error) {
             console.error('Error al actualizar proveedor:', error);
             if (error.code === 'P2002') {
-                return res.status(400).json({ error: 'El NIT ya está registrado' });
+                res.status(400).json({ error: 'El NIT ya está registrado' });
+                return;
             }
             res.status(500).json({ error: 'Error al actualizar proveedor' });
         }
@@ -66,7 +69,7 @@ exports.supplierController = {
         }
     },
     // Endpoints para cascada de ubicación
-    async getCountries(req, res) {
+    async getCountries(_req, res) {
         try {
             const countries = await supplier_service_1.supplierService.getCountries();
             res.json(countries);

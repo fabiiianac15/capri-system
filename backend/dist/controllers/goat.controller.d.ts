@@ -6,7 +6,7 @@ declare class GoatController {
     getByCustomId(req: Request, res: Response): Promise<void>;
     update(req: Request, res: Response): Promise<void>;
     delete(req: Request, res: Response): Promise<void>;
-    getStats(req: Request, res: Response): Promise<void>;
+    getStats(_req: Request, res: Response): Promise<void>;
     updateCategoryByWeight(req: Request, res: Response): Promise<void>;
 }
 declare const _default: GoatController;

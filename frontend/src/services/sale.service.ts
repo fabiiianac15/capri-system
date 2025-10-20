@@ -1,6 +1,6 @@
 import api from '../lib/axios';
 
-export type ProductType = 'CARNE' | 'LECHE' | 'CABRA_VIVA';
+export type ProductType = 'CARNE' | 'LECHE' | 'CABRA_VIVA' | 'PRODUCTO_ELABORADO';
 export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID';
 
 export interface Sale {
@@ -14,6 +14,7 @@ export interface Sale {
   totalPrice: number;
   paymentMethod: string;
   paymentStatus: PaymentStatus;
+  amountPaid: number;
   userId: string;
   goatId?: string | null;
   notes?: string | null;
@@ -42,6 +43,7 @@ export interface CreateSaleDTO {
   totalPrice: number;
   paymentMethod: string;
   paymentStatus?: PaymentStatus;
+  amountPaid?: number;
   goatId?: string;
   notes?: string;
   saleDate?: string;
@@ -57,6 +59,7 @@ export interface UpdateSaleDTO {
   totalPrice?: number;
   paymentMethod?: string;
   paymentStatus?: PaymentStatus;
+  amountPaid?: number;
   goatId?: string;
   notes?: string;
   saleDate?: string;

@@ -54,7 +54,16 @@ async function main() {
     }
   });
 
-  console.log('✅ Departamentos creados: 4');
+  const norteSantander = await prisma.state.upsert({
+    where: { countryId_name: { countryId: colombia.id, name: 'Norte de Santander' } },
+    update: {},
+    create: {
+      name: 'Norte de Santander',
+      countryId: colombia.id
+    }
+  });
+
+  console.log('✅ Departamentos creados: 5');
 
   // Crear ciudades de Antioquia
   await prisma.city.upsert({
@@ -138,7 +147,68 @@ async function main() {
     create: { name: 'Girón', stateId: santander.id }
   });
 
-  console.log('✅ Ciudades creadas: 13');
+  // Crear ciudades de Norte de Santander
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Cúcuta' } },
+    update: {},
+    create: { name: 'Cúcuta', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Ocaña' } },
+    update: {},
+    create: { name: 'Ocaña', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Ábrego' } },
+    update: {},
+    create: { name: 'Ábrego', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Convención' } },
+    update: {},
+    create: { name: 'Convención', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'La Playa' } },
+    update: {},
+    create: { name: 'La Playa', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Hacarí' } },
+    update: {},
+    create: { name: 'Hacarí', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'El Carmen' } },
+    update: {},
+    create: { name: 'El Carmen', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Villa Caro' } },
+    update: {},
+    create: { name: 'Villa Caro', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Los Patios' } },
+    update: {},
+    create: { name: 'Los Patios', stateId: norteSantander.id }
+  });
+
+  await prisma.city.upsert({
+    where: { stateId_name: { stateId: norteSantander.id, name: 'Villa del Rosario' } },
+    update: {},
+    create: { name: 'Villa del Rosario', stateId: norteSantander.id }
+  });
+
+  console.log('✅ Ciudades creadas: 23');
 
   // Crear proveedores de ejemplo
   const medellinCity = await prisma.city.findFirst({

@@ -12,7 +12,7 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'USER' as 'ADMIN' | 'USER' | 'VIEWER',
+    role: 'EMPLEADO' as 'COORDINADOR' | 'EMPLEADO' | 'PASANTE',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -177,52 +177,52 @@ export default function Register() {
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, role: 'VIEWER' })}
+                    onClick={() => setFormData({ ...formData, role: 'PASANTE' })}
                     className={`relative p-4 rounded-xl border-2 transition-all duration-300 ${
-                      formData.role === 'VIEWER'
+                      formData.role === 'PASANTE'
                         ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-600 text-white shadow-lg scale-105'
                         : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400 hover:shadow-md'
                     }`}
                   >
-                    <div className="text-3xl mb-2">👁️</div>
-                    <p className="text-xs font-bold">Visor</p>
-                    <p className="text-[10px] mt-1 opacity-80">Solo lectura</p>
+                    <div className="text-3xl mb-2">🎓</div>
+                    <p className="text-xs font-bold">Pasante</p>
+                    <p className="text-[10px] mt-1 opacity-80">Aprendizaje</p>
                   </button>
                   
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, role: 'USER' })}
+                    onClick={() => setFormData({ ...formData, role: 'EMPLEADO' })}
                     className={`relative p-4 rounded-xl border-2 transition-all duration-300 ${
-                      formData.role === 'USER'
+                      formData.role === 'EMPLEADO'
                         ? 'bg-gradient-to-br from-green-500 to-green-600 border-green-600 text-white shadow-lg scale-105'
                         : 'bg-white border-gray-300 text-gray-700 hover:border-green-400 hover:shadow-md'
                     }`}
                   >
                     <div className="text-3xl mb-2">👤</div>
-                    <p className="text-xs font-bold">Usuario</p>
-                    <p className="text-[10px] mt-1 opacity-80">Permisos estándar</p>
+                    <p className="text-xs font-bold">Empleado</p>
+                    <p className="text-[10px] mt-1 opacity-80">Operaciones</p>
                   </button>
                   
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, role: 'ADMIN' })}
+                    onClick={() => setFormData({ ...formData, role: 'COORDINADOR' })}
                     className={`relative p-4 rounded-xl border-2 transition-all duration-300 ${
-                      formData.role === 'ADMIN'
+                      formData.role === 'COORDINADOR'
                         ? 'bg-gradient-to-br from-purple-500 to-purple-600 border-purple-600 text-white shadow-lg scale-105'
                         : 'bg-white border-gray-300 text-gray-700 hover:border-purple-400 hover:shadow-md'
                     }`}
                   >
                     <div className="text-3xl mb-2">👑</div>
-                    <p className="text-xs font-bold">Admin</p>
-                    <p className="text-[10px] mt-1 opacity-80">Control total</p>
+                    <p className="text-xs font-bold">Coordinador</p>
+                    <p className="text-[10px] mt-1 opacity-80">Supervisión</p>
                   </button>
                 </div>
                 <div className="bg-[#e8f0d8] rounded-lg p-3 mt-2">
                   <p className="text-xs text-[#2a4a04] font-medium">
                     <span className="font-bold">Rol seleccionado:</span> {
-                      formData.role === 'ADMIN' ? '👑 Administrador' :
-                      formData.role === 'USER' ? '👤 Usuario' :
-                      '👁️ Visor'
+                      formData.role === 'COORDINADOR' ? '👑 Coordinador' :
+                      formData.role === 'EMPLEADO' ? '👤 Empleado' :
+                      '🎓 Pasante'
                     }
                   </p>
                 </div>

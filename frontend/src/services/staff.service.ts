@@ -7,7 +7,7 @@ export interface Staff {
   fullName: string;
   dni: string;
   staffType: StaffType;
-  salary: number;
+  salary?: number;  // Opcional para practicantes
   yearsExperience: number;
   specialization?: string | null;
   academicDegree?: string | null;
@@ -34,7 +34,7 @@ export interface CreateStaffDTO {
   fullName: string;
   dni: string;
   staffType: StaffType;
-  salary: number;
+  salary?: number;  // Opcional para practicantes
   yearsExperience: number;
   specialization?: string;
   academicDegree?: string;

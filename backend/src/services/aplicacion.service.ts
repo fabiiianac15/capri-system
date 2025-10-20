@@ -57,7 +57,8 @@ class AplicacionMedicamentoService {
         observaciones: data.observaciones,
         reaccionAdversa: data.reaccionAdversa,
         efectividad: data.efectividad,
-      },
+        createdById: (data as any).createdById,
+      } as any,
       include: {
         goat: {
           select: {
@@ -73,7 +74,10 @@ class AplicacionMedicamentoService {
             unidadMedida: true,
           },
         },
-      },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any,
     });
 
     // Nota: No descontamos stock automáticamente porque puede ser aplicación retroactiva
@@ -139,7 +143,10 @@ class AplicacionMedicamentoService {
             unidadMedida: true,
           },
         },
-      },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any,
       orderBy: { fechaAplicacion: 'desc' },
     });
   }

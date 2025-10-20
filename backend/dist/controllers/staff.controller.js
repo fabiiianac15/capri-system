@@ -109,7 +109,7 @@ class StaffController {
             }
         }
     }
-    async getStats(req, res) {
+    async getStats(_req, res) {
         try {
             const stats = await staff_service_1.default.getStats();
             res.status(200).json({ data: stats });
@@ -118,7 +118,7 @@ class StaffController {
             res.status(500).json({ error: 'Error al obtener estadísticas' });
         }
     }
-    async getManagers(req, res) {
+    async getManagers(_req, res) {
         try {
             const managers = await staff_service_1.default.getManagers();
             res.status(200).json({ data: managers });

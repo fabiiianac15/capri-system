@@ -33,8 +33,11 @@ export const productService = {
             date: 'desc'
           },
           take: 5 // Últimas 5 salidas
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
         }
-      },
+      } as any,
       orderBy: {
         createdAt: 'desc'
       }
@@ -71,8 +74,11 @@ export const productService = {
           orderBy: {
             date: 'desc'
           }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
         }
-      }
+      } as any
     });
   },
 
@@ -88,11 +94,21 @@ export const productService = {
     location?: string;
     expirationDate?: Date;
   }) {
+    // Convertir string vacío a undefined para productos locales
+    const productData = {
+      ...data,
+      supplierId: data.supplierId && data.supplierId.trim() !== '' ? data.supplierId : undefined,
+      createdById: (data as any).createdById
+    };
+    
     return await prisma.product.create({
-      data,
+      data: productData as any,
       include: {
-        supplier: true
-      }
+        supplier: true,
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any
     });
   },
 
@@ -108,9 +124,17 @@ export const productService = {
     location?: string;
     expirationDate?: Date;
   }) {
+    // Convertir string vacío a null para productos locales
+    const productData = {
+      ...data,
+      supplierId: data.supplierId !== undefined 
+        ? (data.supplierId && data.supplierId.trim() !== '' ? data.supplierId : null)
+        : undefined
+    };
+    
     return await prisma.product.update({
       where: { id },
-      data,
+      data: productData,
       include: {
         supplier: true
       }

@@ -31,7 +31,17 @@ export const productController = {
 
   async create(req: Request, res: Response) {
     try {
-      const product = await productService.create(req.body);
+      const data = {
+        ...req.body,
+        currentStock: parseFloat(req.body.currentStock),
+        minStock: parseFloat(req.body.minStock),
+        price: parseFloat(req.body.price),
+        expirationDate: req.body.expirationDate && req.body.expirationDate.trim() !== '' 
+          ? new Date(req.body.expirationDate) 
+          : undefined,
+        createdById: req.user?.userId
+      };
+      const product = await productService.create(data);
       res.status(201).json(product);
     } catch (error) {
       console.error('Error al crear producto:', error);
@@ -42,7 +52,16 @@ export const productController = {
   async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const product = await productService.update(id, req.body);
+      const data = {
+        ...req.body,
+        currentStock: req.body.currentStock !== undefined ? parseFloat(req.body.currentStock) : undefined,
+        minStock: req.body.minStock !== undefined ? parseFloat(req.body.minStock) : undefined,
+        price: req.body.price !== undefined ? parseFloat(req.body.price) : undefined,
+        expirationDate: req.body.expirationDate && req.body.expirationDate.trim() !== '' 
+          ? new Date(req.body.expirationDate) 
+          : undefined
+      };
+      const product = await productService.update(id, data);
       res.json(product);
     } catch (error) {
       console.error('Error al actualizar producto:', error);

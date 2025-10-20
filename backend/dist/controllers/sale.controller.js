@@ -112,7 +112,7 @@ class SaleController {
             }
         }
     }
-    async getStats(req, res) {
+    async getStats(_req, res) {
         try {
             const stats = await sale_service_1.default.getStats();
             res.status(200).json({ data: stats });

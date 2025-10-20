@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import goatService from '../services/goat.service';
 import { generateGoatsReport } from '../utils/goatsPdfReport';
+import { ImageUpload } from '../components/ImageUpload';
 import type { Goat, GoatSex, GoatCategory, GoatStatus } from '../types/index';
 import { Eye, X, Filter, Edit2, FileText, Download } from 'lucide-react';
 
@@ -41,6 +42,7 @@ export default function Goats() {
   const [formData, setFormData] = useState({
     customId: '',
     name: '',
+    photo: '',
     breed: '',
     birthDate: '',
     sex: 'FEMALE' as GoatSex,
@@ -82,6 +84,7 @@ export default function Goats() {
       const payload = {
         customId: formData.customId,
         name: formData.name || undefined,
+        photo: formData.photo || undefined,
         breed: formData.breed,
         birthDate: formData.birthDate,
         sex: formData.sex,
@@ -117,6 +120,7 @@ export default function Goats() {
     setFormData({
       customId: '',
       name: '',
+      photo: '',
       breed: '',
       birthDate: '',
       sex: 'FEMALE' as GoatSex,
@@ -149,6 +153,7 @@ export default function Goats() {
       const payload = {
         customId: formData.customId,
         name: formData.name || undefined,
+        photo: formData.photo || undefined,
         breed: formData.breed,
         birthDate: formData.birthDate,
         sex: formData.sex,
@@ -176,6 +181,7 @@ export default function Goats() {
     setFormData({
       customId: goat.customId,
       name: goat.name || '',
+      photo: goat.photo || '',
       breed: goat.breed,
       birthDate: goat.birthDate.split('T')[0],
       sex: goat.sex as GoatSex,
@@ -574,7 +580,18 @@ export default function Goats() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
+              </div>
 
+              {/* Campo de foto - ancho completo */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Foto de la Cabra</label>
+                <ImageUpload
+                  currentImage={formData.photo}
+                  onImageChange={(photo) => setFormData({ ...formData, photo })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Raza *</label>
                   <input
@@ -706,6 +723,19 @@ export default function Goats() {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Foto de la cabra - centrada arriba */}
+              {selectedGoat.photo && (
+                <div className="flex justify-center">
+                  <div className="relative w-64 h-64 rounded-xl overflow-hidden shadow-lg border-4 border-[#6b7c45]/20">
+                    <img
+                      src={selectedGoat.photo}
+                      alt={selectedGoat.name || selectedGoat.customId}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Información General */}
               <div className="bg-gradient-to-r from-[#6b7c45]/10 to-[#6b7c45]/5 p-6 rounded-lg border border-[#6b7c45]/20">
                 <h4 className="text-lg font-semibold text-[#1a2e02] mb-4 flex items-center gap-2">
@@ -736,6 +766,12 @@ export default function Goats() {
                     <p className="text-sm text-gray-600">Categoría</p>
                     <p className="font-medium text-gray-900">{selectedGoat.category}</p>
                   </div>
+                  {selectedGoat.createdBy && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600">Registrado por</p>
+                      <p className="font-medium text-gray-900">👤 {selectedGoat.createdBy.name}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -938,6 +974,17 @@ export default function Goats() {
                     value={formData.name}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6b7c45]"
+                  />
+                </div>
+
+                {/* Campo de foto - ancho completo */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Foto de la Cabra
+                  </label>
+                  <ImageUpload
+                    currentImage={formData.photo}
+                    onImageChange={(photo) => setFormData({ ...formData, photo })}
                   />
                 </div>
 

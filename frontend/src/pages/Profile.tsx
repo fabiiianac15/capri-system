@@ -226,7 +226,7 @@ export default function ProfilePage() {
                       )}
                       <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                         <Shield className="w-4 h-4 mr-1" />
-                        {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'USER' ? 'Usuario' : 'Visor'}
+                        {user?.role === 'COORDINADOR' ? 'Coordinador' : user?.role === 'EMPLEADO' ? 'Empleado' : 'Pasante'}
                       </div>
                     </div>
                     <button
@@ -289,7 +289,7 @@ export default function ProfilePage() {
                         <div>
                           <p className="text-xs text-gray-600 uppercase font-medium">Rol</p>
                           <p className="text-gray-900 font-medium mt-1">
-                            {user?.role === 'ADMIN' ? '👑 Administrador' : user?.role === 'USER' ? '👤 Usuario' : '👁️ Visor'}
+                            {user?.role === 'COORDINADOR' ? '👑 Coordinador' : user?.role === 'EMPLEADO' ? '👤 Empleado' : '🎓 Pasante'}
                           </p>
                         </div>
                         <div>
@@ -422,7 +422,7 @@ export default function ProfilePage() {
                       <div>
                         <p className="text-xs text-gray-500">Rol</p>
                         <p className="font-medium text-gray-900">
-                          {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'USER' ? 'Usuario' : 'Visor'}
+                          {user?.role === 'COORDINADOR' ? 'Coordinador' : user?.role === 'EMPLEADO' ? 'Empleado' : 'Pasante'}
                         </p>
                       </div>
                       <div>

@@ -82,7 +82,7 @@ export default function StaffPage() {
         fullName: formData.fullName,
         dni: formData.dni,
         staffType: formData.staffType,
-        salary: parseFloat(formData.salary),
+        salary: formData.salary ? parseFloat(formData.salary) : undefined,
         yearsExperience: parseInt(formData.yearsExperience),
         specialization: formData.specialization || undefined,
         academicDegree: formData.academicDegree || undefined,
@@ -112,7 +112,7 @@ export default function StaffPage() {
         fullName: formData.fullName,
         dni: formData.dni,
         staffType: formData.staffType,
-        salary: parseFloat(formData.salary),
+        salary: formData.salary ? parseFloat(formData.salary) : undefined,
         yearsExperience: parseInt(formData.yearsExperience),
         specialization: formData.specialization || undefined,
         academicDegree: formData.academicDegree || undefined,
@@ -157,7 +157,7 @@ export default function StaffPage() {
       fullName: staffMember.fullName,
       dni: staffMember.dni,
       staffType: staffMember.staffType,
-      salary: staffMember.salary.toString(),
+      salary: staffMember.salary ? staffMember.salary.toString() : '',
       yearsExperience: staffMember.yearsExperience.toString(),
       specialization: staffMember.specialization || '',
       academicDegree: staffMember.academicDegree || '',
@@ -422,7 +422,7 @@ export default function StaffPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                          {formatCurrency(staffMember.salary)}
+                          {staffMember.salary ? formatCurrency(staffMember.salary) : <span className="text-gray-400 italic">No asignado</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {staffMember.yearsExperience} años
@@ -523,16 +523,16 @@ export default function StaffPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Salario (COP) *
+                        Salario (COP) <span className="text-gray-500 text-xs">(Opcional para practicantes)</span>
                       </label>
                       <input
                         type="number"
-                        required
                         min="0"
                         step="1000"
                         value={formData.salary}
                         onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="Dejar en blanco si es practicante"
                       />
                     </div>
 
@@ -706,16 +706,16 @@ export default function StaffPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Salario (COP) *
+                        Salario (COP) <span className="text-gray-500 text-xs">(Opcional para practicantes)</span>
                       </label>
                       <input
                         type="number"
-                        required
                         min="0"
                         step="1000"
                         value={formData.salary}
                         onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="Dejar en blanco si es practicante"
                       />
                     </div>
 
@@ -885,7 +885,7 @@ export default function StaffPage() {
                     <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Salario</p>
-                        <p className="font-bold text-lg text-green-600">{formatCurrency(selectedStaff.salary)}</p>
+                        <p className="font-bold text-lg text-green-600">{selectedStaff.salary ? formatCurrency(selectedStaff.salary) : <span className="text-gray-400 italic">No asignado</span>}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Años de Experiencia</p>

@@ -115,7 +115,11 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // POST /api/montas - Registrar nueva monta
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const monta = await montaService.create(req.body);
+    const data = {
+      ...req.body,
+      createdById: req.user?.userId
+    };
+    const monta = await montaService.create(data);
     res.status(201).json(monta);
   } catch (error: any) {
     console.error('Error al crear monta:', error);

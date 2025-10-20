@@ -120,7 +120,7 @@ export default function Dashboard() {
                   <div className="bg-white/20 backdrop-blur-md rounded-xl px-6 py-4 border border-white/30 shadow-lg">
                     <p className="text-xs text-white/80 uppercase tracking-wider font-bold mb-1">Tu Rol</p>
                     <p className="text-xl font-extrabold text-white">
-                      {user?.role === 'ADMIN' ? '👑 Administrador' : user?.role === 'USER' ? '👤 Usuario' : '👁️ Visor'}
+                      {user?.role === 'COORDINADOR' ? '👑 Coordinador' : user?.role === 'EMPLEADO' ? '👤 Empleado' : '🎓 Pasante'}
                     </p>
                   </div>
                   <button

@@ -5,7 +5,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'USER' | 'VIEWER';
+  role: 'COORDINADOR' | 'EMPLEADO' | 'PASANTE';
   avatar?: string;
   phone?: string;
   bio?: string;
@@ -31,6 +31,15 @@ export interface RegisterData {
 }
 
 // ========================================
+// TIPO PARA USUARIO CREADOR
+// ========================================
+export interface CreatedBy {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// ========================================
 // TIPOS DE CABRAS
 // ========================================
 export type GoatSex = 'MALE' | 'FEMALE';
@@ -41,6 +50,7 @@ export interface Goat {
   id: string;
   customId: string;
   name?: string;
+  photo?: string;
   breed: string;
   sex: GoatSex;
   birthDate: string;
@@ -55,6 +65,7 @@ export interface Goat {
   fatherId?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: CreatedBy;
   mother?: {
     id: string;
     customId: string;
@@ -68,6 +79,7 @@ export interface Goat {
 export interface CreateGoatData {
   customId: string;
   name?: string;
+  photo?: string;
   breed: string;
   sex: GoatSex;
   birthDate: string;
@@ -80,6 +92,7 @@ export interface CreateGoatData {
 
 export interface UpdateGoatData {
   name?: string;
+  photo?: string;
   breed?: string;
   weight?: number;
   category?: GoatCategory;
@@ -101,6 +114,7 @@ export interface Vaccine {
   applicationDate: string;
   notes?: string;
   createdAt: string;
+  createdBy?: CreatedBy;
 }
 
 // ========================================
@@ -123,6 +137,7 @@ export interface ReproductiveRecord {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: CreatedBy;
 }
 
 // ========================================
@@ -176,6 +191,7 @@ export interface Medicamento {
   activo: boolean;
   createdAt: string;
   updatedAt: string;
+  createdBy?: CreatedBy;
 }
 
 export interface CreateMedicamentoData {
@@ -247,6 +263,7 @@ export interface AplicacionMedicamento {
   observaciones?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: CreatedBy;
   goat?: Goat;
   medicamento?: Medicamento;
 }
@@ -305,6 +322,7 @@ export interface Monta {
   notas?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: CreatedBy;
   hembra?: Goat;
   macho?: Goat;
 }

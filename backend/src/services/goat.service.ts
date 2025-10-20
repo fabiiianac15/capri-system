@@ -49,14 +49,18 @@ class GoatService {
         category: data.category || 'CRIA',
         motherId: data.motherId,
         fatherId: data.fatherId,
-        notes: data.notes
-      },
+        notes: data.notes,
+        createdById: (data as any).createdById
+      } as any,
       include: {
         mother: {
           select: { id: true, customId: true, name: true }
         },
-        vaccines: true
-      }
+        vaccines: true,
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any
     });
   }
 
@@ -87,8 +91,11 @@ class GoatService {
         reproductiveData: {
           take: 1,
           orderBy: { mountingDate: 'desc' }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
         }
-      },
+      } as any,
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -109,8 +116,11 @@ class GoatService {
         },
         reproductiveData: {
           orderBy: { mountingDate: 'desc' }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
         }
-      }
+      } as any
     });
 
     if (!goat) {
@@ -128,8 +138,11 @@ class GoatService {
         mother: true,
         offspring: true,
         vaccines: true,
-        reproductiveData: true
-      }
+        reproductiveData: true,
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any
     });
 
     if (!goat) {

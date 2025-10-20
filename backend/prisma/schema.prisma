@@ -15,15 +15,23 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      String   @default("USER") // ADMIN, USER, VIEWER
+  role      String   @default("EMPLEADO") // COORDINADOR, EMPLEADO, PASANTE
   avatar    String?  // URL o base64 de la foto de perfil
   phone     String?
   bio       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  sales     Sale[]
-  outputs   InventoryOutput[]
+  // Relaciones con registros creados por el usuario
+  sales                     Sale[]
+  outputs                   InventoryOutput[]
+  goatsCreated              Goat[]                    @relation("GoatCreator")
+  productsCreated           Product[]                 @relation("ProductCreator")
+  medicamentosCreated       Medicamento[]             @relation("MedicamentoCreator")
+  montasCreated             Monta[]                   @relation("MontaCreator")
+  aplicacionesCreated       AplicacionMedicamento[]   @relation("AplicacionCreator")
+  vaccinesCreated           Vaccine[]                 @relation("VaccineCreator")
+  reproductiveRecordsCreated ReproductiveRecord[]     @relation("ReproductiveRecordCreator")
 }
 
 // ========================================
@@ -35,6 +43,7 @@ model Goat {
   // Identificación (formato: madre-cría, ej: 218-344)
   customId          String      @unique
   name              String?
+  photo             String?     // URL o base64 de la foto
   
   // Información biológica
   breed             String      // Raza
@@ -59,6 +68,10 @@ model Goat {
   fatherId          String?
   mother            Goat?       @relation("GoatMother", fields: [motherId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   offspring         Goat[]      @relation("GoatMother")
+  
+  // Usuario que creó el registro
+  createdById       String
+  createdBy         User        @relation("GoatCreator", fields: [createdById], references: [id])
   
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -107,6 +120,11 @@ model ReproductiveRecord {
   totalOffspring  Int       @default(0)
   
   notes           String?
+  
+  // Usuario que creó el registro
+  createdById     String
+  createdBy       User      @relation("ReproductiveRecordCreator", fields: [createdById], references: [id])
+  
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
@@ -126,6 +144,10 @@ model Vaccine {
   unit            String
   applicationDate DateTime
   notes           String?
+  
+  // Usuario que creó el registro
+  createdById     String
+  createdBy       User     @relation("VaccineCreator", fields: [createdById], references: [id])
   
   createdAt       DateTime @default(now())
   
@@ -151,6 +173,10 @@ model Product {
   
   location        String?
   expirationDate  DateTime?
+  
+  // Usuario que creó el registro
+  createdById     String
+  createdBy       User      @relation("ProductCreator", fields: [createdById], references: [id])
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -207,7 +233,7 @@ model Staff {
   dni             String    @unique
   
   staffType       String    // ADMINISTRATIVO, PRACTICANTE
-  salary          Float
+  salary          Float?    // Opcional para practicantes
   yearsExperience Int
   specialization  String?
   academicDegree  String?
@@ -230,7 +256,7 @@ model Staff {
 // ========================================
 model Sale {
   id              String   @id @default(cuid())
-  productType     String   // CARNE, LECHE, CABRA_VIVA
+  productType     String   // CARNE, LECHE, CABRA_VIVA, PRODUCTO_ELABORADO
   
   customerId      String?
   customerName    String
@@ -242,6 +268,7 @@ model Sale {
   
   paymentMethod   String
   paymentStatus   String   @default("PENDING") // PENDING, PARTIAL, PAID
+  amountPaid      Float    @default(0) // Monto pagado (para pagos parciales)
   
   userId          String
   user            User     @relation(fields: [userId], references: [id])
@@ -332,6 +359,11 @@ model Monta {
   produccionPromedio    Float?    // Litros diarios promedio
   
   notas                 String?
+  
+  // Usuario que creó el registro
+  createdById           String
+  createdBy             User      @relation("MontaCreator", fields: [createdById], references: [id])
+  
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   
@@ -374,6 +406,10 @@ model Medicamento {
   notas               String?
   activo              Boolean  @default(true)
   
+  // Usuario que creó el registro
+  createdById         String
+  createdBy           User     @relation("MedicamentoCreator", fields: [createdById], references: [id])
+  
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   
@@ -415,6 +451,10 @@ model AplicacionMedicamento {
   observaciones         String?
   reaccionAdversa       String?
   efectividad           String?     // "Buena", "Regular", "Mala"
+  
+  // Usuario que creó el registro
+  createdById           String
+  createdBy             User        @relation("AplicacionCreator", fields: [createdById], references: [id])
   
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt

@@ -17,6 +17,9 @@ class GoatController {
       // Convertir birthDate a Date
       data.birthDate = new Date(data.birthDate);
 
+      // Agregar usuario que crea el registro
+      data.createdById = req.user?.userId;
+
       const goat = await goatService.create(data);
       
       res.status(201).json({
@@ -87,6 +90,11 @@ class GoatController {
       const { id } = req.params;
       const data = req.body;
 
+      // Convertir birthDate a Date si está presente
+      if (data.birthDate) {
+        data.birthDate = new Date(data.birthDate);
+      }
+
       const goat = await goatService.update(id, data);
       
       res.status(200).json({
@@ -120,7 +128,7 @@ class GoatController {
     }
   }
 
-  async getStats(req: Request, res: Response): Promise<void> {
+  async getStats(_req: Request, res: Response): Promise<void> {
     try {
       const stats = await goatService.getStats();
       

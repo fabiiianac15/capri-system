@@ -14,7 +14,7 @@ export interface Product {
   price: number;
   location?: string | null;
   expirationDate?: Date | null;
-  supplierId: string;
+  supplierId?: string | null;
   supplier?: {
     id: string;
     name: string;
@@ -27,8 +27,13 @@ export interface Product {
         };
       };
     };
-  };
+  } | null;
   outputs?: InventoryOutput[];
+  createdBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,7 +66,7 @@ export interface CreateProductDTO {
   price: number;
   location?: string;
   expirationDate?: string; // ISO string
-  supplierId: string;
+  supplierId?: string;
 }
 
 export interface UpdateProductDTO {

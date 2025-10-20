@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-type ProductType = 'CARNE' | 'LECHE' | 'CABRA_VIVA';
+type ProductType = 'CARNE' | 'LECHE' | 'CABRA_VIVA' | 'PRODUCTO_ELABORADO';
 type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID';
 
 interface CreateSaleData {
@@ -15,6 +15,7 @@ interface CreateSaleData {
   totalPrice: number;
   paymentMethod: string;
   paymentStatus?: PaymentStatus;
+  amountPaid?: number;
   userId: string;
   goatId?: string;
   notes?: string;
@@ -31,6 +32,7 @@ interface UpdateSaleData {
   totalPrice?: number;
   paymentMethod?: string;
   paymentStatus?: PaymentStatus;
+  amountPaid?: number;
   goatId?: string;
   notes?: string;
   saleDate?: Date;
@@ -58,9 +60,23 @@ class SaleService {
       }
     }
 
+    // Determinar automáticamente el paymentStatus basado en amountPaid
+    const amountPaid = data.amountPaid ?? 0;
+    let paymentStatus: PaymentStatus = data.paymentStatus || 'PENDING';
+    
+    if (amountPaid >= data.totalPrice) {
+      paymentStatus = 'PAID';
+    } else if (amountPaid > 0 && amountPaid < data.totalPrice) {
+      paymentStatus = 'PARTIAL';
+    } else {
+      paymentStatus = 'PENDING';
+    }
+
     const sale = await prisma.sale.create({
       data: {
         ...data,
+        amountPaid,
+        paymentStatus,
         saleDate: data.saleDate || new Date()
       },
       include: {
@@ -196,9 +212,28 @@ class SaleService {
       }
     }
 
+    // Determinar automáticamente el paymentStatus basado en amountPaid
+    const totalPrice = data.totalPrice ?? sale.totalPrice;
+    const amountPaid = data.amountPaid ?? (sale as any).amountPaid ?? 0;
+    let paymentStatus = data.paymentStatus;
+    
+    // Solo recalcular si no se especifica paymentStatus explícitamente
+    if (!paymentStatus && data.amountPaid !== undefined) {
+      if (amountPaid >= totalPrice) {
+        paymentStatus = 'PAID';
+      } else if (amountPaid > 0 && amountPaid < totalPrice) {
+        paymentStatus = 'PARTIAL';
+      } else {
+        paymentStatus = 'PENDING';
+      }
+    }
+
     const updated = await prisma.sale.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        ...(paymentStatus && { paymentStatus })
+      },
       include: {
         user: {
           select: {
@@ -249,50 +284,68 @@ class SaleService {
   }
 
   async getStats() {
-    const [
-      total,
-      byProductType,
-      byPaymentStatus,
-      totalRevenue,
-      avgSaleValue
-    ] = await Promise.all([
-      prisma.sale.count(),
-      prisma.sale.groupBy({
-        by: ['productType'],
-        _count: true,
-        _sum: {
-          totalPrice: true
-        }
-      }),
-      prisma.sale.groupBy({
-        by: ['paymentStatus'],
-        _count: true
-      }),
-      prisma.sale.aggregate({
-        _sum: {
-          totalPrice: true
-        }
-      }),
-      prisma.sale.aggregate({
-        _avg: {
-          totalPrice: true
-        }
-      })
-    ]);
+    // Obtener todas las ventas para calcular correctamente
+    const allSales = await prisma.sale.findMany({
+      select: {
+        productType: true,
+        paymentStatus: true,
+        totalPrice: true,
+        amountPaid: true
+      }
+    }) as any[];
+
+    const total = allSales.length;
+
+    // Calcular ingresos reales (suma de amountPaid)
+    const totalRevenue = allSales.reduce((sum, sale) => sum + (sale.amountPaid || 0), 0);
+
+    // Calcular pagos pendientes (suma de lo que falta por pagar)
+    const pendingPayments = allSales
+      .filter(sale => sale.paymentStatus === 'PENDING' || sale.paymentStatus === 'PARTIAL')
+      .reduce((sum, sale) => sum + (sale.totalPrice - (sale.amountPaid || 0)), 0);
+
+    // Agrupar por tipo de producto
+    const byProductType = allSales.reduce((acc, sale) => {
+      const existing = acc.find((item: any) => item.productType === sale.productType);
+      if (existing) {
+        existing.count++;
+        existing.revenue += (sale.amountPaid || 0);
+      } else {
+        acc.push({
+          productType: sale.productType,
+          count: 1,
+          revenue: sale.amountPaid || 0
+        });
+      }
+      return acc;
+    }, [] as { productType: string; count: number; revenue: number }[]);
+
+    // Agrupar por estado de pago
+    const byPaymentStatus = allSales.reduce((acc, sale) => {
+      const existing = acc.find((item: any) => item.paymentStatus === sale.paymentStatus);
+      if (existing) {
+        existing.count++;
+      } else {
+        acc.push({
+          paymentStatus: sale.paymentStatus,
+          count: 1
+        });
+      }
+      return acc;
+    }, [] as { paymentStatus: string; count: number }[]);
+
+    // Promedio del valor total de ventas (no confundir con lo pagado)
+    const avgSaleValue = total > 0 
+      ? allSales.reduce((sum, sale) => sum + sale.totalPrice, 0) / total
+      : 0;
 
     return {
       total,
-      byProductType: byProductType.map(t => ({
-        productType: t.productType,
-        count: t._count,
-        revenue: t._sum.totalPrice || 0
-      })),
-      byPaymentStatus: byPaymentStatus.map(t => ({
-        paymentStatus: t.paymentStatus,
-        count: t._count
-      })),
-      totalRevenue: totalRevenue._sum.totalPrice || 0,
-      avgSaleValue: avgSaleValue._avg.totalPrice || 0
+      byProductType,
+      byPaymentStatus,
+      totalRevenue, // Suma de lo realmente pagado (amountPaid)
+      avgSaleValue,
+      pendingPayments // Suma de lo que falta por pagar
     };
   }
 }

@@ -22,6 +22,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Verificar si hay un usuario guardado al cargar
     const savedUser = authService.getCurrentUser();
+    const savedToken = authService.getToken();
+    
+    console.log('🔍 Verificando autenticación al cargar...');
+    console.log('👤 Usuario guardado:', savedUser?.name);
+    console.log('🔑 Token guardado:', savedToken ? savedToken.substring(0, 20) + '...' : 'No hay token');
+    
     if (savedUser) {
       setUser(savedUser);
     }
@@ -29,8 +35,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (data: LoginData) => {
+    console.log('🔐 Iniciando login...');
     const response = await authService.login(data);
     setUser(response.user);
+    console.log('✅ Login completado. Usuario:', response.user.name);
   };
 
   const register = async (data: RegisterData) => {

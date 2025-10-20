@@ -58,7 +58,13 @@ class MedicamentoService {
         ubicacionAlmacen: data.ubicacionAlmacen,
         condicionesAlmacenamiento: data.condicionesAlmacenamiento,
         notas: data.notas,
-      },
+        createdById: (data as any).createdById,
+      } as any,
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any
     });
   }
 
@@ -89,7 +95,10 @@ class MedicamentoService {
             },
           },
         },
-      },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any,
       orderBy: [
         { activo: 'desc' },
         { nombre: 'asc' },
@@ -114,7 +123,10 @@ class MedicamentoService {
             },
           },
         },
-      },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      } as any,
     });
   }
 

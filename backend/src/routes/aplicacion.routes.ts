@@ -80,7 +80,11 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // POST /api/aplicaciones - Crear aplicación
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const aplicacion = await aplicacionService.create(req.body);
+    const data = {
+      ...req.body,
+      createdById: req.user?.userId
+    };
+    const aplicacion = await aplicacionService.create(data);
     res.status(201).json(aplicacion);
   } catch (error: any) {
     console.error('Error al crear aplicación:', error);
@@ -98,7 +102,12 @@ router.post('/bulk', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const aplicaciones = await aplicacionService.createBulk(goatIds, aplicacionData);
+    const dataWithUser = {
+      ...aplicacionData,
+      createdById: req.user?.userId
+    };
+
+    const aplicaciones = await aplicacionService.createBulk(goatIds, dataWithUser);
     res.status(201).json(aplicaciones);
   } catch (error: any) {
     console.error('Error al crear aplicaciones masivas:', error);

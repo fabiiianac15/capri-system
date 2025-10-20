@@ -71,7 +71,11 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // POST /api/medicamentos - Crear medicamento
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const medicamento = await medicamentoService.create(req.body);
+    const data = {
+      ...req.body,
+      createdById: req.user?.userId
+    };
+    const medicamento = await medicamentoService.create(data);
     res.status(201).json(medicamento);
   } catch (error: any) {
     console.error('Error al crear medicamento:', error);

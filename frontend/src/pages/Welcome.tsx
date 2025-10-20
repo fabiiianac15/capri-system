@@ -86,10 +86,10 @@ export default function WelcomePage() {
                   </div>
                   
                   <div className="flex items-center gap-3 mt-6 bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 w-fit border border-white/20">
-                    <span className="text-2xl">{user?.role === 'ADMIN' ? '👑' : user?.role === 'USER' ? '👤' : '👁️'}</span>
+                    <span className="text-2xl">{user?.role === 'COORDINADOR' ? '👑' : user?.role === 'EMPLEADO' ? '👤' : '🎓'}</span>
                     <div>
                       <p className="text-xs text-white/70 uppercase font-bold tracking-wide">Tu Rol</p>
-                      <p className="text-lg font-black">{user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'USER' ? 'Usuario' : 'Visor'}</p>
+                      <p className="text-lg font-black">{user?.role === 'COORDINADOR' ? 'Coordinador' : user?.role === 'EMPLEADO' ? 'Empleado' : 'Pasante'}</p>
                     </div>
                   </div>
                 </div>
